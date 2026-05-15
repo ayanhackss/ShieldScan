@@ -1,0 +1,16 @@
+{
+  "id": 1000,
+  "title": "ShieldScan",
+  "tip": "lib",
+  "name": "malwarescan",
+  "type": "扩展",
+  "ps": "aaPanel security plugin — Real-time malware detection with 55+ signatures, YARA rules, entropy analysis, WordPress core verification, and auto-quarantine",
+  "versions": "1.0",
+  "shell": "malwarescan.sh",
+  "checks": "/www/server/panel/plugin/malwarescan",
+  "author": "Custom",
+  "home": "https://github.com",
+  "date": "2026-05-15",
+  "default": false,
+  "display": 1
+}

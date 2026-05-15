@@ -1,0 +1,705 @@
+<style>
+.mw-header{padding:0 0 12px;margin-bottom:14px;border-bottom:1px solid #eaeaea;}
+.mw-header h2{margin:0;font-size:16px;font-weight:500;color:#1a1a1a;letter-spacing:-0.3px;}
+.mw-header p{margin:3px 0 0;color:#888;font-size:12px;}
+.mw-card{background:#fff;border:1px solid #eaeaea;border-radius:4px;padding:14px;margin-bottom:10px;}
+.mw-card h4{margin:0 0 10px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;color:#1a1a1a;}
+.mw-table{width:100%;border-collapse:collapse;font-size:11px;}
+.mw-table th{padding:6px 8px;text-align:left;font-weight:500;color:#666;border-bottom:1px solid #eaeaea;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;}
+.mw-table td{padding:5px 8px;border-bottom:1px solid #f8f8f8;color:#333;}
+.mw-table tr:hover td{background:#fafafa;}
+.mw-btn{padding:5px 11px;border-radius:3px;border:1px solid #d4d4d4;cursor:pointer;font-size:11px;font-weight:500;background:#fff;color:#333;}
+.mw-btn:hover{border-color:#999;background:#fafafa;}
+.mw-btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}.mw-btn-primary:hover{background:#333;}
+.mw-btn-danger{color:#dc2626;border-color:#fca5a5;}.mw-btn-danger:hover{background:#fef2f2;}
+.mw-btn-sm{padding:3px 7px;font-size:10px;}
+.mw-input{padding:6px 10px;border:1px solid #d4d4d4;border-radius:3px;font-size:12px;font-family:monospace;}
+.mw-input:focus{border-color:#1a1a1a;outline:none;}
+.mw-select{padding:6px 10px;border:1px solid #d4d4d4;border-radius:3px;font-size:12px;background:#fff;}
+.mw-sev{display:inline-block;padding:1px 5px;border-radius:2px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;}
+.mw-sev-critical{background:#fef2f2;color:#dc2626;}.mw-sev-high{background:#fff7ed;color:#ea580c;}.mw-sev-medium{background:#fefce8;color:#ca8a04;}
+.mw-cat{display:inline-block;padding:1px 5px;border-radius:2px;font-size:9px;background:#f4f4f5;color:#52525b;font-family:monospace;}
+.mw-stats{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.mw-stat{flex:1;min-width:80px;border:1px solid #eaeaea;border-radius:3px;padding:10px;text-align:center;}
+.mw-stat .num{font-size:18px;font-weight:600;color:#1a1a1a;font-family:monospace;}
+.mw-stat .lbl{font-size:9px;color:#999;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+.mw-progress{height:3px;background:#eaeaea;border-radius:2px;overflow:hidden;margin:8px 0;}
+.mw-progress-bar{height:100%;background:#1a1a1a;transition:width 0.3s;}
+.mw-site-row{padding:7px 0;border-bottom:1px solid #f4f4f5;display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+.mw-site-row:last-child{border-bottom:none;}
+.mw-snippet{background:#f8f8f8;padding:2px 5px;border-radius:2px;font-size:10px;color:#666;font-family:monospace;max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;margin-top:3px;}
+.mw-empty{color:#999;font-size:12px;padding:14px 0;text-align:center;}
+.mw-diff-add{background:#f0fdf4;}.mw-diff-del{background:#fef2f2;}.mw-diff-mod{background:#fffbeb;}
+</style>
+
+<div class="bt-form">
+  <div class="bt-w-main">
+    <div class="bt-w-menu">
+      <p class="bgw" onclick="mw.dashboard()">Dashboard</p>
+      <p onclick="mw.scan()">Scan</p>
+      <p onclick="mw.integrity()">Integrity</p>
+      <p onclick="mw.quarantine()">Quarantine</p>
+      <p onclick="mw.schedule()">Schedule</p>
+      <p onclick="mw.reports()">Reports</p>
+      <p onclick="mw.whitelist()">Whitelist</p>
+      <p onclick="mw.wordpress()">WordPress</p>
+      <p onclick="mw.realtime()">Realtime</p>
+      <p onclick="mw.mlscan()">ML Scan</p>
+    </div>
+    <div class="bt-w-con" style="padding:14px;">
+      <div id="mw_con"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var mw = {
+  _tab: function(i){ $('.bt-w-menu p').removeClass('bgw'); $('.bt-w-menu p').eq(i).addClass('bgw'); },
+  _sev: function(s){ return '<span class="mw-sev mw-sev-' + s + '">' + s + '</span>'; },
+  _cat: function(c){ return '<span class="mw-cat">' + c + '</span>'; },
+  _pollTimer: null,
+  _currentScan: null,
+
+
+  // === DASHBOARD ===
+  dashboard: function() {
+    this._tab(0);
+    $('#mw_con').html('<div class="mw-header"><h2>ShieldScan</h2><p>Real-time malware detection engine</p></div><div id="mw_dash"></div>');
+    $.post('/plugin?action=a&name=malwarescan&s=get_stats', {}, function(res) {
+      if (!res.status) { $('#mw_dash').html('<p class="mw-empty">' + res.msg + '</p>'); return; }
+      var html = '<div class="mw-stats">' +
+        '<div class="mw-stat"><div class="num">' + res.total_indexed + '</div><div class="lbl">Files Indexed</div></div>' +
+        '<div class="mw-stat"><div class="num">' + res.baseline_count + '</div><div class="lbl">Baseline</div></div>' +
+        '<div class="mw-stat"><div class="num">' + res.quarantined + '</div><div class="lbl">Quarantined</div></div>' +
+        '<div class="mw-stat"><div class="num">' + res.schedules + '</div><div class="lbl">Schedules</div></div>' +
+        '<div class="mw-stat"><div class="num">' + res.reports + '</div><div class="lbl">Reports</div></div></div>';
+      if (res.last_scan) {
+        var dt = new Date(res.last_scan.date * 1000).toLocaleString();
+        var color = res.last_scan.threats > 0 ? 'color:#dc2626;' : 'color:#16a34a;';
+        html += '<div class="mw-card"><h4>Last Scan</h4><p style="font-size:12px;margin:0;">' +
+          '<span style="font-family:monospace;">' + res.last_scan.path + '</span> &mdash; ' +
+          '<span style="' + color + 'font-weight:600;">' + res.last_scan.threats + ' threats</span> &mdash; ' + dt + '</p></div>';
+      }
+      html += '<div class="mw-card"><h4>Detection Capabilities</h4>' +
+        '<p style="font-size:11px;color:#666;margin:0;line-height:1.8;">' +
+        'PHP webshells (c99, r57, b374k, WSO, Alfa, IndoXploit) &bull; Backdoors &bull; ' +
+        'Obfuscated code (base64, hex, chr, gzinflate chains) &bull; Crypto miners &bull; ' +
+        'Spam mailers &bull; Phishing kits &bull; Card skimmers &bull; Keyloggers &bull; ' +
+        'WordPress malware &bull; Hidden iframes &bull; .htaccess hijacks &bull; ' +
+        'Reverse shells &bull; LFI/RFI &bull; Privilege escalation &bull; ' +
+        'Shannon entropy analysis &bull; YARA rules &bull; File hash matching &bull; ' +
+        'Integrity monitoring</p></div>';
+      $('#mw_dash').html(html);
+    });
+  },
+
+  // === SCAN ===
+  scan: function() {
+    this._tab(1);
+    var html = '<div class="mw-header"><h2>Scan</h2><p>Full malware scan with signature + entropy + YARA detection</p></div>' +
+      '<div class="mw-card"><h4>Path</h4>' +
+      '<div style="display:flex;gap:8px;"><input type="text" id="mw_path" class="mw-input" style="width:340px;" placeholder="/www/wwwroot/site.com" />' +
+      '<button class="mw-btn mw-btn-primary" onclick="mw.startScan()">Start Scan</button></div></div>' +
+      '<div class="mw-card"><h4>Sites</h4><div id="mw_sites"><p class="mw-empty">Loading...</p></div></div>' +
+      '<div id="mw_progress"></div><div id="mw_threats"></div>';
+    $('#mw_con').html(html);
+    $.post('/plugin?action=a&name=malwarescan&s=get_sites', {}, function(res) {
+      if (!res.status || !res.sites.length) { $('#mw_sites').html('<p class="mw-empty">No sites</p>'); return; }
+      var h = '';
+      for (var i = 0; i < res.sites.length; i++) {
+        var s = res.sites[i];
+        h += '<div class="mw-site-row"><span style="font-family:monospace;">' + s.name + ' <span style="color:#999;">' + s.path + '</span></span>' +
+          '<button class="mw-btn mw-btn-sm" onclick="$(\'#mw_path\').val(\'' + s.path + '\');mw.startScan();">Scan</button></div>';
+      }
+      $('#mw_sites').html(h);
+    });
+  },
+
+  startScan: function() {
+    var path = $('#mw_path').val().trim();
+    if (!path) { layer.msg('Enter path'); return; }
+    $.post('/plugin?action=a&name=malwarescan&s=scan_path', {path: path}, function(res) {
+      if (!res.status) { layer.msg(res.msg); return; }
+      mw._currentScan = res.scan_id;
+      $('#mw_progress').html('<div class="mw-card"><h4>Scanning</h4>' +
+        '<div class="mw-progress"><div class="mw-progress-bar" id="mw_pbar" style="width:3%;"></div></div>' +
+        '<p id="mw_info" style="font-size:11px;color:#666;margin:0;">Starting...</p></div>');
+      mw._poll();
+    });
+  },
+
+  _poll: function() {
+    if (mw._pollTimer) clearTimeout(mw._pollTimer);
+    $.post('/plugin?action=a&name=malwarescan&s=scan_status', {scan_id: mw._currentScan}, function(res) {
+      if (!res.status) return;
+      var pct = res.scan_status === 'complete' ? 100 : Math.min(95, res.scanned / 3);
+      $('#mw_pbar').css('width', pct + '%');
+      $('#mw_info').text(res.scan_status === 'complete'
+        ? 'Complete — ' + res.total_files + ' files / ' + res.elapsed + 's / ' + res.threats_found + ' threats'
+        : 'Scanning... ' + res.scanned + ' files (' + res.threats_found + ' threats)');
+      if (res.scan_status === 'complete') {
+        mw._renderThreats(res.threats, res.total_files, res.high_entropy);
+      } else {
+        mw._pollTimer = setTimeout(mw._poll, 800);
+      }
+    });
+  },
+
+  _renderThreats: function(threats, total, entropy) {
+    var crit = threats.filter(function(t){return t.severity==='critical';}).length;
+    var high = threats.filter(function(t){return t.severity==='high';}).length;
+    var med = threats.filter(function(t){return t.severity==='medium';}).length;
+    var html = '<div class="mw-stats">' +
+      '<div class="mw-stat"><div class="num">' + total + '</div><div class="lbl">Scanned</div></div>' +
+      '<div class="mw-stat"><div class="num" style="color:#dc2626;">' + crit + '</div><div class="lbl">Critical</div></div>' +
+      '<div class="mw-stat"><div class="num" style="color:#ea580c;">' + high + '</div><div class="lbl">High</div></div>' +
+      '<div class="mw-stat"><div class="num" style="color:#ca8a04;">' + med + '</div><div class="lbl">Medium</div></div>' +
+      '<div class="mw-stat"><div class="num">' + (entropy||0) + '</div><div class="lbl">High Entropy</div></div></div>';
+    if (!threats.length) {
+      html += '<div class="mw-card"><p class="mw-empty">Clean — no threats detected</p></div>';
+    } else {
+      html += '<div class="mw-card"><h4>Threats (' + threats.length + ')</h4><table class="mw-table"><thead><tr><th>File</th><th>L</th><th>Sev</th><th>Category</th><th>Detail</th><th>Act</th></tr></thead><tbody>';
+      for (var i = 0; i < threats.length; i++) {
+        var t = threats[i];
+        var fname = t.file.split('/').slice(-2).join('/');
+        html += '<tr><td title="' + t.file + '" style="font-family:monospace;font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + fname + '</td>' +
+          '<td>' + t.line + '</td><td>' + mw._sev(t.severity) + '</td><td>' + mw._cat(t.category) + '</td>' +
+          '<td style="max-width:250px;"><span style="font-size:10px;">' + t.description + '</span><span class="mw-snippet">' + (t.snippet||'').replace(/</g,'&lt;').substring(0,100) + '</span></td>' +
+          '<td style="white-space:nowrap;"><button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw._quarantine(\'' + t.file.replace(/'/g,"\\'") + '\')">Q</button> ' +
+          '<button class="mw-btn mw-btn-sm" onclick="mw._wl(\'' + t.file.replace(/'/g,"\\'") + '\')">WL</button></td></tr>';
+      }
+      html += '</tbody></table></div>';
+    }
+    $('#mw_threats').html(html);
+  },
+
+  _quarantine: function(fp) {
+    layer.confirm('Quarantine ' + fp.split('/').pop() + '?', function(idx) {
+      layer.close(idx);
+      $.post('/plugin?action=a&name=malwarescan&s=quarantine_file', {filepath: fp}, function(res) { layer.msg(res.msg); });
+    });
+  },
+  _wl: function(fp) {
+    $.post('/plugin?action=a&name=malwarescan&s=add_whitelist', {filepath: fp}, function(res) { layer.msg(res.msg); });
+  },
+
+
+  // === INTEGRITY ===
+  integrity: function() {
+    this._tab(2);
+    var html = '<div class="mw-header"><h2>File Integrity</h2><p>Detect unauthorized file changes</p></div>' +
+      '<div class="mw-card"><h4>Baseline</h4>' +
+      '<div style="display:flex;gap:8px;align-items:center;">' +
+      '<input type="text" id="mw_int_path" class="mw-input" style="width:300px;" placeholder="/www/wwwroot/site.com" />' +
+      '<button class="mw-btn mw-btn-primary mw-btn-sm" onclick="mw.createBaseline()">Create Baseline</button>' +
+      '<button class="mw-btn mw-btn-sm" onclick="mw.checkIntegrity()">Check Now</button></div></div>' +
+      '<div id="mw_int_results"></div>';
+    $('#mw_con').html(html);
+  },
+
+  createBaseline: function() {
+    var path = $('#mw_int_path').val().trim();
+    if (!path) { layer.msg('Enter path'); return; }
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=integrity_create_baseline', {path: path}, function(res) {
+      layer.close(l); layer.msg(res.msg);
+    });
+  },
+
+  checkIntegrity: function() {
+    var path = $('#mw_int_path').val().trim();
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=integrity_check', {path: path}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      var c = res.changes;
+      var html = '<div class="mw-stats">' +
+        '<div class="mw-stat"><div class="num">' + res.baseline_files + '</div><div class="lbl">Baseline</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#ea580c;">' + c.modified.length + '</div><div class="lbl">Modified</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#dc2626;">' + c.deleted.length + '</div><div class="lbl">Deleted</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#ca8a04;">' + c.new.length + '</div><div class="lbl">New</div></div></div>';
+      if (!res.total_changes) {
+        html += '<div class="mw-card"><p class="mw-empty">No changes detected</p></div>';
+      } else {
+        html += '<div class="mw-card"><h4>Changes (' + res.total_changes + ')</h4><table class="mw-table"><thead><tr><th>Status</th><th>File</th><th>Details</th></tr></thead><tbody>';
+        for (var i = 0; i < c.modified.length; i++) {
+          var m = c.modified[i];
+          html += '<tr class="mw-diff-mod"><td>MODIFIED</td><td style="font-family:monospace;font-size:10px;">' + m.path + '</td><td style="font-size:10px;">' + m.old_md5.substring(0,8) + ' → ' + m.new_md5.substring(0,8) + '</td></tr>';
+        }
+        for (var i = 0; i < c.deleted.length; i++) {
+          html += '<tr class="mw-diff-del"><td>DELETED</td><td style="font-family:monospace;font-size:10px;">' + c.deleted[i].path + '</td><td></td></tr>';
+        }
+        for (var i = 0; i < c.new.length; i++) {
+          html += '<tr class="mw-diff-add"><td>NEW</td><td style="font-family:monospace;font-size:10px;">' + c.new[i].path + '</td><td style="font-size:10px;">' + (c.new[i].size/1024).toFixed(1) + 'KB</td></tr>';
+        }
+        html += '</tbody></table></div>';
+      }
+      $('#mw_int_results').html(html);
+    });
+  },
+
+  // === QUARANTINE ===
+  quarantine: function() {
+    this._tab(3);
+    var html = '<div class="mw-header"><h2>Quarantine</h2><p>Isolated threats</p></div><div id="mw_qlist"></div>';
+    $('#mw_con').html(html);
+    $.post('/plugin?action=a&name=malwarescan&s=list_quarantine', {}, function(res) {
+      if (!res.items.length) { $('#mw_qlist').html('<div class="mw-card"><p class="mw-empty">Empty</p></div>'); return; }
+      var html = '<div class="mw-card"><table class="mw-table"><thead><tr><th>Original Path</th><th>Size</th><th>MD5</th><th>Date</th><th>Act</th></tr></thead><tbody>';
+      for (var i = 0; i < res.items.length; i++) {
+        var q = res.items[i];
+        var dt = new Date(q.quarantined_at * 1000).toLocaleString();
+        html += '<tr><td style="font-family:monospace;font-size:10px;">' + q.original_path + '</td><td>' + (q.size/1024).toFixed(1) + 'K</td><td style="font-size:10px;">' + q.md5.substring(0,12) + '</td><td style="font-size:10px;">' + dt + '</td>' +
+          '<td style="white-space:nowrap;"><button class="mw-btn mw-btn-sm" onclick="mw._restore(\'' + q.filename + '\')">Restore</button> ' +
+          '<button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw._delQ(\'' + q.filename + '\')">Delete</button></td></tr>';
+      }
+      html += '</tbody></table></div>';
+      $('#mw_qlist').html(html);
+    });
+  },
+
+  _restore: function(f) {
+    layer.confirm('Restore file to original location?', function(idx) {
+      layer.close(idx);
+      $.post('/plugin?action=a&name=malwarescan&s=restore_file', {filename: f}, function(res) { layer.msg(res.msg); mw.quarantine(); });
+    });
+  },
+  _delQ: function(f) {
+    layer.confirm('Permanently delete?', function(idx) {
+      layer.close(idx);
+      $.post('/plugin?action=a&name=malwarescan&s=delete_quarantined', {filename: f}, function(res) { layer.msg(res.msg); mw.quarantine(); });
+    });
+  },
+
+  // === SCHEDULE ===
+  schedule: function() {
+    this._tab(4);
+    var html = '<div class="mw-header"><h2>Scheduled Scans</h2><p>Automated recurring scans</p></div>' +
+      '<div class="mw-card"><h4>Add Schedule</h4>' +
+      '<div style="display:flex;gap:8px;align-items:center;">' +
+      '<input type="text" id="mw_sch_path" class="mw-input" style="width:280px;" placeholder="/www/wwwroot/site.com" />' +
+      '<select id="mw_sch_hours" class="mw-select"><option value="6">Every 6h</option><option value="12">Every 12h</option><option value="24" selected>Daily</option><option value="168">Weekly</option></select>' +
+      '<button class="mw-btn mw-btn-primary mw-btn-sm" onclick="mw.addSchedule()">Add</button></div></div>' +
+      '<div id="mw_sch_list"></div>';
+    $('#mw_con').html(html);
+    this._loadSchedules();
+  },
+
+  _loadSchedules: function() {
+    $.post('/plugin?action=a&name=malwarescan&s=schedule_list', {}, function(res) {
+      if (!res.schedules.length) { $('#mw_sch_list').html('<div class="mw-card"><p class="mw-empty">No schedules</p></div>'); return; }
+      var html = '<div class="mw-card"><table class="mw-table"><thead><tr><th>Path</th><th>Interval</th><th>Last Run</th><th>Status</th><th>Act</th></tr></thead><tbody>';
+      for (var i = 0; i < res.schedules.length; i++) {
+        var s = res.schedules[i];
+        var lr = s.last_run ? new Date(s.last_run * 1000).toLocaleString() : 'Never';
+        var st = s.enabled ? '<span style="color:#16a34a;">Active</span>' : '<span style="color:#999;">Paused</span>';
+        html += '<tr><td style="font-family:monospace;font-size:10px;">' + s.path + '</td><td>' + s.hours + 'h</td><td style="font-size:10px;">' + lr + '</td><td>' + st + '</td>' +
+          '<td style="white-space:nowrap;"><button class="mw-btn mw-btn-sm" onclick="mw._toggleSch(' + s.id + ')">' + (s.enabled ? 'Pause' : 'Enable') + '</button> ' +
+          '<button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw._delSch(' + s.id + ')">Del</button></td></tr>';
+      }
+      html += '</tbody></table></div>';
+      $('#mw_sch_list').html(html);
+    });
+  },
+
+  addSchedule: function() {
+    var path = $('#mw_sch_path').val().trim(), hours = $('#mw_sch_hours').val();
+    if (!path) { layer.msg('Enter path'); return; }
+    $.post('/plugin?action=a&name=malwarescan&s=schedule_add', {path: path, hours: hours}, function(res) { layer.msg(res.msg); mw._loadSchedules(); });
+  },
+  _toggleSch: function(id) {
+    $.post('/plugin?action=a&name=malwarescan&s=schedule_toggle', {id: id}, function(res) { layer.msg(res.msg); mw._loadSchedules(); });
+  },
+  _delSch: function(id) {
+    $.post('/plugin?action=a&name=malwarescan&s=schedule_remove', {id: id}, function(res) { layer.msg(res.msg); mw._loadSchedules(); });
+  },
+
+
+  // === REPORTS ===
+  reports: function() {
+    this._tab(5);
+    var html = '<div class="mw-header"><h2>Reports</h2><p>Scan history</p></div><div id="mw_rlist"></div>';
+    $('#mw_con').html(html);
+    $.post('/plugin?action=a&name=malwarescan&s=list_reports', {}, function(res) {
+      if (!res.reports.length) { $('#mw_rlist').html('<div class="mw-card"><p class="mw-empty">No reports</p></div>'); return; }
+      var html = '<div class="mw-card"><table class="mw-table"><thead><tr><th>Path</th><th>Files</th><th>Threats</th><th>Critical</th><th>Time</th><th>Date</th><th>Act</th></tr></thead><tbody>';
+      for (var i = 0; i < res.reports.length; i++) {
+        var r = res.reports[i];
+        var dt = new Date(r.date * 1000).toLocaleString();
+        var tc = r.threats > 0 ? 'color:#dc2626;font-weight:600;' : 'color:#16a34a;';
+        html += '<tr><td style="font-family:monospace;font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + r.path + '</td>' +
+          '<td>' + r.total_files + '</td><td style="' + tc + '">' + r.threats + '</td><td style="color:#dc2626;">' + r.critical + '</td>' +
+          '<td>' + r.elapsed + 's</td><td style="font-size:10px;">' + dt + '</td>' +
+          '<td style="white-space:nowrap;"><button class="mw-btn mw-btn-sm" onclick="mw._viewReport(\'' + r.id + '\')">View</button> ' +
+          '<button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw._delReport(\'' + r.id + '\')">Del</button></td></tr>';
+      }
+      html += '</tbody></table></div><div id="mw_threats"></div>';
+      $('#mw_rlist').html(html);
+    });
+  },
+
+  _viewReport: function(id) {
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=scan_status', {scan_id: id}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      mw._renderThreats(res.threats, res.total_files, res.high_entropy);
+    });
+  },
+  _delReport: function(id) {
+    $.post('/plugin?action=a&name=malwarescan&s=delete_report', {report_id: id}, function(res) { layer.msg(res.msg); mw.reports(); });
+  },
+
+  // === WHITELIST ===
+  whitelist: function() {
+    this._tab(6);
+    var html = '<div class="mw-header"><h2>Whitelist</h2><p>Excluded paths</p></div>' +
+      '<div class="mw-card"><h4>Add</h4><div style="display:flex;gap:8px;">' +
+      '<input type="text" id="mw_wl_path" class="mw-input" style="width:350px;" placeholder="/www/wwwroot/site/file.php or /www/wwwroot/site/dir/" />' +
+      '<button class="mw-btn mw-btn-primary mw-btn-sm" onclick="mw._addWl()">Add</button></div></div>' +
+      '<div id="mw_wl_list"></div>';
+    $('#mw_con').html(html);
+    this._loadWl();
+  },
+
+  _loadWl: function() {
+    $.post('/plugin?action=a&name=malwarescan&s=get_whitelist', {}, function(res) {
+      if (!res.whitelist.length) { $('#mw_wl_list').html('<div class="mw-card"><p class="mw-empty">Empty</p></div>'); return; }
+      var html = '<div class="mw-card"><table class="mw-table"><thead><tr><th>Path</th><th></th></tr></thead><tbody>';
+      for (var i = 0; i < res.whitelist.length; i++) {
+        html += '<tr><td style="font-family:monospace;">' + res.whitelist[i] + '</td>' +
+          '<td><button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw._rmWl(\'' + res.whitelist[i].replace(/'/g,"\\'") + '\')">Remove</button></td></tr>';
+      }
+      html += '</tbody></table></div>';
+      $('#mw_wl_list').html(html);
+    });
+  },
+
+  _addWl: function() {
+    var p = $('#mw_wl_path').val().trim();
+    if (!p) return;
+    $.post('/plugin?action=a&name=malwarescan&s=add_whitelist', {filepath: p}, function(res) { layer.msg(res.msg); mw._loadWl(); $('#mw_wl_path').val(''); });
+  },
+  _rmWl: function(p) {
+    $.post('/plugin?action=a&name=malwarescan&s=remove_whitelist', {filepath: p}, function(res) { layer.msg(res.msg); mw._loadWl(); });
+  },
+
+  // === WORDPRESS ===
+  wordpress: function() {
+    this._tab(7);
+    var html = '<div class="mw-header"><h2>WordPress Scanner</h2><p>Deep scan for WP-specific threats, backdoors, and misconfigurations</p></div>' +
+      '<div id="mw_wp_sites"><p class="mw-empty">Detecting WordPress installations...</p></div><div id="mw_wp_results"></div>';
+    $('#mw_con').html(html);
+    $.post('/plugin?action=a&name=malwarescan&s=wp_detect_sites', {}, function(res) {
+      if (!res.sites.length) { $('#mw_wp_sites').html('<div class="mw-card"><p class="mw-empty">No WordPress sites found</p></div>'); return; }
+      var html = '<div class="mw-card"><h4>WordPress Installations (' + res.sites.length + ')</h4>';
+      for (var i = 0; i < res.sites.length; i++) {
+        var s = res.sites[i];
+        html += '<div class="mw-site-row"><span style="font-family:monospace;">' + s.name + ' <span style="color:#999;">v' + s.version + '</span> <span style="color:#bbb;font-size:10px;">' + s.path + '</span></span>' +
+          '<button class="mw-btn mw-btn-primary mw-btn-sm" onclick="mw.wpScan(\'' + s.path + '\')">WP Scan</button></div>';
+      }
+      html += '</div>';
+      $('#mw_wp_sites').html(html);
+    });
+  },
+
+  wpScan: function(path) {
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=wp_scan', {path: path}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      var r = res.results;
+      var html = '<div class="mw-stats">' +
+        '<div class="mw-stat"><div class="num">' + r.version + '</div><div class="lbl">WP Version</div></div>' +
+        '<div class="mw-stat"><div class="num">' + r.plugins.length + '</div><div class="lbl">Plugins</div></div>' +
+        '<div class="mw-stat"><div class="num">' + r.themes.length + '</div><div class="lbl">Themes</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#dc2626;">' + r.total_issues + '</div><div class="lbl">Issues</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#ea580c;">' + r.core_modified.length + '</div><div class="lbl">Core Modified</div></div></div>';
+
+      // Advanced WP actions
+      html += '<div class="mw-card"><h4>Advanced Actions</h4><div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        '<button class="mw-btn mw-btn-sm" onclick="mw.wpChecksums(\'' + path + '\')">Verify Core Checksums</button>' +
+        '<button class="mw-btn mw-btn-sm" onclick="mw.wpVulns(\'' + path + '\')">Check Plugin CVEs</button>' +
+        '<button class="mw-btn mw-btn-sm" onclick="mw.wpDbScan(\'' + path + '\')">Scan Database</button>' +
+        '<button class="mw-btn mw-btn-primary mw-btn-sm" onclick="mw.wpAutoUpdate(\'' + path + '\')">Auto-Update Plugins</button>' +
+        '<button class="mw-btn mw-btn-sm" onclick="mw.wpPdfReport(\'' + path + '\')">PDF Report</button></div></div>';
+
+      // Config issues
+      if (r.config_issues.length) {
+        html += '<div class="mw-card"><h4>Configuration Issues</h4><table class="mw-table"><tbody>';
+        for (var i = 0; i < r.config_issues.length; i++) {
+          html += '<tr><td>' + mw._sev(r.config_issues[i].severity) + '</td><td>' + r.config_issues[i].issue + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+      }
+
+      // Security issues
+      if (r.issues.length) {
+        html += '<div class="mw-card"><h4>Security Issues (' + r.issues.length + ')</h4><table class="mw-table"><thead><tr><th>Sev</th><th>Type</th><th>File</th><th>Description</th><th>Act</th></tr></thead><tbody>';
+        for (var i = 0; i < r.issues.length; i++) {
+          var issue = r.issues[i];
+          var fname = issue.file ? issue.file.split('/').slice(-3).join('/') : '';
+          html += '<tr><td>' + mw._sev(issue.severity) + '</td><td>' + mw._cat(issue.type) + '</td>' +
+            '<td style="font-family:monospace;font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;" title="' + (issue.file||'') + '">' + fname + '</td>' +
+            '<td style="font-size:10px;">' + issue.description + '</td>' +
+            '<td>' + (issue.file ? '<button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw._quarantine(\'' + issue.file.replace(/'/g,"\\'") + '\')">Q</button>' : '') + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+      } else {
+        html += '<div class="mw-card"><p class="mw-empty" style="color:#16a34a;">No security issues found</p></div>';
+      }
+
+      // Plugins list
+      if (r.plugins.length) {
+        html += '<div class="mw-card"><h4>Installed Plugins</h4><table class="mw-table"><thead><tr><th>Plugin</th><th>Version</th><th>Slug</th></tr></thead><tbody>';
+        for (var i = 0; i < r.plugins.length; i++) {
+          html += '<tr><td>' + r.plugins[i].name + '</td><td>' + r.plugins[i].version + '</td><td style="font-family:monospace;font-size:10px;">' + r.plugins[i].slug + '</td></tr>';
+        }
+        html += '</tbody></table></div>';
+      }
+
+      $('#mw_wp_results').html(html);
+    });
+  },
+
+  wpChecksums: function(path) {
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=wp_verify_checksums', {path: path}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      var r = res.results;
+      var html = '<div class="mw-card"><h4>Core Checksum Verification (WP ' + r.version + ')</h4>' +
+        '<div class="mw-stats"><div class="mw-stat"><div class="num" style="color:#16a34a;">' + r.verified + '</div><div class="lbl">Verified</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#dc2626;">' + r.modified.length + '</div><div class="lbl">Modified</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#ea580c;">' + r.missing.length + '</div><div class="lbl">Missing</div></div>' +
+        '<div class="mw-stat"><div class="num" style="color:#ca8a04;">' + r.extra.length + '</div><div class="lbl">Extra Files</div></div></div>';
+      if (r.modified.length) {
+        html += '<table class="mw-table"><thead><tr><th>File</th><th>Expected</th><th>Actual</th></tr></thead><tbody>';
+        for (var i = 0; i < r.modified.length; i++) {
+          var m = r.modified[i];
+          html += '<tr><td style="font-family:monospace;font-size:10px;">' + m.file + '</td><td style="font-size:9px;">' + m.expected.substring(0,12) + '...</td><td style="font-size:9px;color:#dc2626;">' + m.actual.substring(0,12) + '...</td></tr>';
+        }
+        html += '</tbody></table>';
+      }
+      if (r.extra.length) {
+        html += '<p style="margin-top:8px;font-size:11px;"><b>Extra files in core dirs:</b> ' + r.extra.slice(0,10).join(', ') + (r.extra.length > 10 ? '...' : '') + '</p>';
+      }
+      html += '</div>';
+      $('#mw_wp_results').append(html);
+    });
+  },
+
+  wpVulns: function(path) {
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=wp_check_vulns', {path: path}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      var html = '<div class="mw-card"><h4>Plugin Vulnerabilities (' + res.vulnerable + '/' + res.plugins_checked + ' vulnerable)</h4>';
+      if (!res.results.length) { html += '<p class="mw-empty" style="color:#16a34a;">No known vulnerabilities</p>'; }
+      else {
+        html += '<table class="mw-table"><thead><tr><th>Plugin</th><th>Version</th><th>Vulnerability</th><th>Severity</th></tr></thead><tbody>';
+        for (var i = 0; i < res.results.length; i++) {
+          var p = res.results[i];
+          for (var j = 0; j < p.vulnerabilities.length; j++) {
+            var v = p.vulnerabilities[j];
+            html += '<tr><td>' + p.plugin + '</td><td>' + p.installed_version + '</td><td style="font-size:10px;">' + v.title + '</td><td>' + mw._sev(v.severity) + '</td></tr>';
+          }
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+      $('#mw_wp_results').append(html);
+    });
+  },
+
+  wpDbScan: function(path) {
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=wp_scan_database', {path: path}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      var html = '<div class="mw-card"><h4>Database Scan (' + res.total_threats + ' threats, ' + res.total_admins + ' admins)</h4>';
+      if (res.threats.length) {
+        html += '<table class="mw-table"><thead><tr><th>Table</th><th>Key</th><th>Type</th><th>Snippet</th></tr></thead><tbody>';
+        for (var i = 0; i < res.threats.length; i++) {
+          var t = res.threats[i];
+          html += '<tr><td style="font-family:monospace;font-size:10px;">' + t.table + '</td><td style="font-size:10px;">' + t.key + '</td><td>' + mw._cat(t.type) + '</td><td class="mw-snippet">' + (t.snippet||'').replace(/</g,'&lt;').substring(0,80) + '</td></tr>';
+        }
+        html += '</tbody></table>';
+      } else { html += '<p class="mw-empty" style="color:#16a34a;">Database clean</p>'; }
+      if (res.admin_users && res.admin_users.length) {
+        html += '<h4 style="margin-top:10px;">Admin Users</h4><table class="mw-table"><thead><tr><th>ID</th><th>Login</th><th>Registered</th></tr></thead><tbody>';
+        for (var i = 0; i < res.admin_users.length; i++) {
+          var u = res.admin_users[i];
+          html += '<tr><td>' + u.id + '</td><td style="font-family:monospace;">' + u.login + '</td><td style="font-size:10px;">' + u.registered + '</td></tr>';
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+      $('#mw_wp_results').append(html);
+    });
+  },
+
+  wpAutoUpdate: function(path) {
+    layer.confirm('Auto-update all outdated plugins?', function(idx) {
+      layer.close(idx);
+      var l = layer.load();
+      $.post('/plugin?action=a&name=malwarescan&s=wp_auto_update', {path: path}, function(res) {
+        layer.close(l);
+        if (!res.status) { layer.msg(res.msg); return; }
+        layer.msg('Updated ' + res.updated + ' plugins');
+      });
+    });
+  },
+
+  wpPdfReport: function(path) {
+    // First run a scan, then generate PDF
+    layer.msg('Generating report...');
+    $.post('/plugin?action=a&name=malwarescan&s=scan_path', {path: path}, function(res) {
+      if (!res.status) { layer.msg(res.msg); return; }
+      // Wait for scan to complete then generate PDF
+      var checkDone = setInterval(function() {
+        $.post('/plugin?action=a&name=malwarescan&s=scan_status', {scan_id: res.scan_id}, function(sr) {
+          if (sr.scan_status === 'complete') {
+            clearInterval(checkDone);
+            $.post('/plugin?action=a&name=malwarescan&s=generate_pdf_report', {scan_id: res.scan_id}, function(pr) {
+              if (pr.status) { layer.msg('PDF ready: ' + pr.filename); }
+              else { layer.msg(pr.msg); }
+            });
+          }
+        });
+      }, 2000);
+    });
+  },
+
+  // === REALTIME WATCHER TAB ===
+  realtime: function() {
+    this._tab(8);
+    var html = '<div class="mw-header"><h2>Real-time Protection</h2><p>Inotify-based file monitoring with auto-quarantine</p></div>' +
+      '<div id="mw_rt_status"></div>' +
+      '<div class="mw-card"><h4>Configuration</h4>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;">' +
+      '<div><label style="font-size:10px;color:#999;text-transform:uppercase;">Watch Paths (one per line)</label>' +
+      '<textarea id="mw_rt_paths" class="mw-input" style="width:100%;height:60px;resize:vertical;" placeholder="/www/wwwroot/site1.com&#10;/www/wwwroot/site2.com"></textarea></div>' +
+      '<div style="display:flex;gap:12px;align-items:center;">' +
+      '<label style="font-size:11px;"><input type="checkbox" id="mw_rt_autoq"> Auto-quarantine threats</label>' +
+      '</div>' +
+      '<div><label style="font-size:10px;color:#999;text-transform:uppercase;">Alert Webhook (Telegram/Discord/Slack)</label>' +
+      '<input type="text" id="mw_rt_webhook" class="mw-input" style="width:100%;" placeholder="https://hooks.slack.com/..." /></div>' +
+      '<div style="display:flex;gap:6px;">' +
+      '<button class="mw-btn mw-btn-primary mw-btn-sm" onclick="mw.rtSaveConfig()">Save Config</button>' +
+      '<button class="mw-btn mw-btn-sm" style="background:#16a34a;color:#fff;border-color:#16a34a;" onclick="mw.rtStart()">Start</button>' +
+      '<button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw.rtStop()">Stop</button></div></div></div>' +
+      '<div class="mw-card"><h4>Events <button class="mw-btn mw-btn-sm" onclick="mw.rtLoadEvents()" style="float:right;">Refresh</button></h4><div id="mw_rt_events"></div></div>';
+    $('#mw_con').html(html);
+    this.rtLoadStatus();
+    this.rtLoadEvents();
+  },
+
+  rtLoadStatus: function() {
+    $.post('/plugin?action=a&name=malwarescan&s=watcher_status', {}, function(res) {
+      if (!res.status) return;
+      var st = res.running ? '<span style="color:#16a34a;">● Running</span>' : '<span style="color:#999;">○ Stopped</span>';
+      var html = '<div class="mw-card" style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<span>Status: ' + st + ' &mdash; ' + res.events_count + ' events' + (res.has_inotify ? '' : ' <span style="color:#dc2626;">(inotify not installed)</span>') + '</span></div>';
+      $('#mw_rt_status').html(html);
+      if (res.watch_paths.length) { $('#mw_rt_paths').val(res.watch_paths.join('\n')); }
+      $('#mw_rt_autoq').prop('checked', res.auto_quarantine);
+    });
+  },
+
+  rtSaveConfig: function() {
+    var paths = $('#mw_rt_paths').val();
+    var autoq = $('#mw_rt_autoq').is(':checked') ? '1' : '0';
+    var webhook = $('#mw_rt_webhook').val();
+    $.post('/plugin?action=a&name=malwarescan&s=watcher_config', {watch_paths: paths, auto_quarantine: autoq, webhook: webhook}, function(res) { layer.msg(res.msg); });
+  },
+
+  rtStart: function() {
+    $.post('/plugin?action=a&name=malwarescan&s=watcher_start', {}, function(res) { layer.msg(res.msg); mw.rtLoadStatus(); });
+  },
+  rtStop: function() {
+    $.post('/plugin?action=a&name=malwarescan&s=watcher_stop', {}, function(res) { layer.msg(res.msg); mw.rtLoadStatus(); });
+  },
+
+  rtLoadEvents: function() {
+    $.post('/plugin?action=a&name=malwarescan&s=watcher_events', {}, function(res) {
+      if (!res.events || !res.events.length) { $('#mw_rt_events').html('<p class="mw-empty">No events</p>'); return; }
+      var html = '<table class="mw-table"><thead><tr><th>Time</th><th>File</th><th>Threat</th><th>Action</th></tr></thead><tbody>';
+      for (var i = 0; i < Math.min(res.events.length, 50); i++) {
+        var e = res.events[i];
+        var dt = new Date(e.time * 1000).toLocaleString();
+        var act = e.action === 'quarantined' ? '<span style="color:#16a34a;">quarantined</span>' : '<span style="color:#dc2626;">detected</span>';
+        html += '<tr><td style="font-size:10px;">' + dt + '</td><td style="font-family:monospace;font-size:10px;">' + e.file.split('/').slice(-2).join('/') + '</td><td style="font-size:10px;">' + e.threat + '</td><td>' + act + '</td></tr>';
+      }
+      html += '</tbody></table>';
+      $('#mw_rt_events').html(html);
+    });
+  },
+
+  // === ML SCAN TAB ===
+  mlscan: function() {
+    this._tab(9);
+    var html = '<div class="mw-header"><h2>ML Classifier</h2><p>Machine learning entropy analysis — distinguishes legitimate obfuscation from malware</p></div>' +
+      '<div class="mw-card"><h4>Classify Path</h4>' +
+      '<div style="display:flex;gap:8px;"><input type="text" id="mw_ml_path" class="mw-input" style="width:340px;" placeholder="/www/wwwroot/site.com" />' +
+      '<button class="mw-btn mw-btn-primary" onclick="mw.mlRun()">Analyze</button></div></div>' +
+      '<div class="mw-card"><h4>Single File</h4>' +
+      '<div style="display:flex;gap:8px;"><input type="text" id="mw_ml_file" class="mw-input" style="width:340px;" placeholder="/path/to/file.php" />' +
+      '<button class="mw-btn mw-btn-sm" onclick="mw.mlFile()">Classify</button></div></div>' +
+      '<div id="mw_ml_results"></div>';
+    $('#mw_con').html(html);
+  },
+
+  mlRun: function() {
+    var path = $('#mw_ml_path').val().trim();
+    if (!path) { layer.msg('Enter path'); return; }
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=ml_classify_path', {path: path}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      var html = '<div class="mw-card"><h4>ML Results — ' + res.total_flagged + ' flagged files</h4>';
+      if (!res.results.length) { html += '<p class="mw-empty" style="color:#16a34a;">All files appear clean</p>'; }
+      else {
+        html += '<table class="mw-table"><thead><tr><th>File</th><th>Label</th><th>Confidence</th><th>Entropy</th><th>Reason</th></tr></thead><tbody>';
+        for (var i = 0; i < res.results.length; i++) {
+          var r = res.results[i];
+          var color = r.label === 'malicious' ? '#dc2626' : '#ea580c';
+          html += '<tr><td style="font-family:monospace;font-size:10px;">' + r.file.split('/').slice(-2).join('/') + '</td>' +
+            '<td style="color:' + color + ';font-weight:600;font-size:10px;">' + r.label.toUpperCase() + '</td>' +
+            '<td>' + (r.confidence * 100).toFixed(0) + '%</td>' +
+            '<td>' + (r.features.entropy || 0) + '</td>' +
+            '<td style="font-size:10px;">' + r.reason + '</td></tr>';
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+      $('#mw_ml_results').html(html);
+    });
+  },
+
+  mlFile: function() {
+    var fp = $('#mw_ml_file').val().trim();
+    if (!fp) { layer.msg('Enter file path'); return; }
+    var l = layer.load();
+    $.post('/plugin?action=a&name=malwarescan&s=ml_classify_file', {filepath: fp}, function(res) {
+      layer.close(l);
+      if (!res.status) { layer.msg(res.msg); return; }
+      var color = res.label === 'malicious' ? '#dc2626' : res.label === 'suspicious' ? '#ea580c' : '#16a34a';
+      var html = '<div class="mw-card"><h4>Classification Result</h4>' +
+        '<p style="font-size:14px;color:' + color + ';font-weight:600;">' + res.label.toUpperCase() + ' (' + (res.confidence * 100).toFixed(0) + '% confidence)</p>' +
+        '<p style="font-size:11px;color:#666;">' + res.reason + '</p>' +
+        '<table class="mw-table" style="margin-top:8px;"><tbody>';
+      var f = res.features;
+      html += '<tr><td>Entropy</td><td>' + f.entropy + '</td></tr>';
+      html += '<tr><td>Chi-Square</td><td>' + f.chi_square + '</td></tr>';
+      html += '<tr><td>ASCII Ratio</td><td>' + (f.ascii_ratio * 100).toFixed(1) + '%</td></tr>';
+      html += '<tr><td>Longest Line</td><td>' + f.longest_line + ' chars</td></tr>';
+      html += '<tr><td>Keyword Density</td><td>' + f.keyword_density + '</td></tr>';
+      html += '<tr><td>File Size</td><td>' + f.file_size + ' bytes</td></tr>';
+      html += '</tbody></table></div>';
+      $('#mw_ml_results').html(html);
+    });
+  }
+};
+mw.dashboard();
+</script>
