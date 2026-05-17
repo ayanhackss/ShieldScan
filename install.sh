@@ -7,9 +7,9 @@ Install() {
     mkdir -p $install_path/{quarantine,logs,rules,status,reports,wp_cache}
     chmod 700 $install_path/quarantine
 
-    # Core dependencies
-    pip3 install yara-python requests reportlab pymysql inotify 2>/dev/null || \
-    pip install yara-python requests reportlab pymysql inotify 2>/dev/null || \
+    # Core dependencies (pinned versions)
+    pip3 install 'yara-python==4.3.1' 'requests==2.31.0' 'reportlab==4.1.0' 'pymysql==1.1.0' 'inotify==0.2.10' 2>/dev/null || \
+    pip install 'yara-python==4.3.1' 'requests==2.31.0' 'reportlab==4.1.0' 'pymysql==1.1.0' 'inotify==0.2.10' 2>/dev/null || \
     echo 'Some optional deps failed (scanner works without them)'
 
     # WP-CLI (for auto-updates)
@@ -41,7 +41,26 @@ Install() {
 }
 
 Uninstall() {
+    # Backup quarantine metadata before removal
+    if [ -d "$install_path/quarantine" ] && [ "$(ls -A $install_path/quarantine 2>/dev/null)" ]; then
+        backup_dir="/www/backup/malwarescan_quarantine_$(date +%Y%m%d_%H%M%S)"
+        mkdir -p "$backup_dir"
+        cp -a $install_path/quarantine/*.meta "$backup_dir/" 2>/dev/null
+        # Export quarantine manifest
+        echo "# ShieldScan Quarantine Backup - $(date)" > "$backup_dir/manifest.txt"
+        echo "# Original quarantine files preserved at: $backup_dir" >> "$backup_dir/manifest.txt"
+        cp -a $install_path/quarantine/* "$backup_dir/" 2>/dev/null
+        echo "Quarantine backed up to: $backup_dir"
+    fi
+
+    # Remove cron
     crontab -l 2>/dev/null | grep -v "malwarescan" | crontab -
+
+    # Stop watcher if running
+    if [ -f "$install_path/watcher.pid" ]; then
+        kill $(cat "$install_path/watcher.pid") 2>/dev/null
+    fi
+
     rm -rf $install_path
     echo 'Uninstall OK'
 }
