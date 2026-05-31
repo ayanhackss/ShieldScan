@@ -8,7 +8,7 @@
   "versions": "1.0",
   "shell": "malwarescan.sh",
   "checks": "/www/server/panel/plugin/malwarescan",
-  "author": "Custom",
+  "author": "Ayan Hussain",
   "home": "https://github.com",
   "date": "2026-05-15",
   "default": false,
