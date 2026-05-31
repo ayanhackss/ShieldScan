@@ -17,11 +17,13 @@ ShieldScan is a free aaPanel plugin that provides enterprise-level malware scann
 |                |                                                   |
 | -------------- | ------------------------------------------------- |
 | **Signatures** | 55+ regex patterns, YARA rules, hash matching     |
-| **ML Engine**  | Shannon entropy + statistical classifier          |
+| **ML Engine**  | Shannon entropy + statistical/AST heuristics      |
+| **Performance**| Aggressive multi-threaded parallel scanning       |
+| **Remediation**| Auto-quarantine & Smart Code Cleaning (extraction)|
 | **Real-time**  | Inotify watcher with auto-quarantine              |
 | **WordPress**  | Core checksums, plugin CVEs, DB scan, auto-update |
 | **Integrity**  | Baseline diffing for tamper detection             |
-| **Reporting**  | PDF export, scan history, dashboard               |
+| **Reporting**  | PDF export, scan history, visual dashboard        |
 
 ---
 
@@ -68,7 +70,7 @@ All optional — the scanner works standalone with regex signatures:
 
 ### ML Classifier
 
-Extracts 8 statistical features per file:
+Extracts 10 statistical and AST-like features per file:
 
 - Shannon entropy
 - Chi-square distribution
@@ -78,6 +80,8 @@ Extracts 8 statistical features per file:
 - Compression ratio
 - Keyword density
 - Line length variance
+- Dynamic function calls (e.g. `$var()`)
+- Chained obfuscation routines (e.g. `eval(base64_decode(gzinflate(...)))`)
 
 Classifies as: `clean` / `suspicious` / `malicious` / `legitimate_obfuscated`
 
@@ -91,7 +95,7 @@ Recognizes legitimate tools: ionCube, SourceGuardian, Zend Guard, phpSHIELD.
 | -------------- | ----------------------------------------------------------------- |
 | Core integrity | Verifies files against WordPress.org checksum API                 |
 | Plugin CVEs    | Checks versions against vulnerability database                    |
-| Database scan  | Detects injected JS/iframes in wp_options, wp_posts               |
+| Database scan  | Advanced REGEX for obfuscated JS/iframes in wp_options, wp_posts, wp_comments |
 | Config audit   | Debug mode, file editing, table prefix, key strength, permissions |
 | Upload dir     | PHP files in uploads, images with embedded PHP                    |
 | mu-plugins     | Auto-loaded backdoors                                             |
@@ -131,7 +135,7 @@ malwarescan/
 
 | Tab        | Function                                         |
 | ---------- | ------------------------------------------------ |
-| Dashboard  | Stats, last scan, capabilities overview          |
+| Dashboard  | Stats, dynamic Chart.js metrics, dark mode toggle|
 | Scan       | Background scan with live progress               |
 | Integrity  | Baseline creation, change detection              |
 | Quarantine | Restore or permanently delete isolated files     |
@@ -156,7 +160,7 @@ All endpoints: `POST /plugin?action=a&name=malwarescan&s={method}`
 
 **Realtime** — `watcher_start`, `watcher_stop`, `watcher_status`, `watcher_events`, `watcher_config`
 
-**Quarantine** — `quarantine_file`, `restore_file`, `delete_quarantined`, `list_quarantine`
+**Remediation** — `clean_file`, `quarantine_file`, `restore_file`, `delete_quarantined`, `list_quarantine`
 
 **Reports** — `generate_pdf_report`, `list_pdf_reports`, `delete_pdf_report`
 

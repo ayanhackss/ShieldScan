@@ -241,7 +241,7 @@ class WPAdvancedScanner:
             prefix = db_creds.get('prefix', 'wp_')
 
             # Scan wp_options for suspicious values
-            cursor.execute(f"SELECT option_name, option_value FROM {prefix}options WHERE option_value LIKE '%eval(%' OR option_value LIKE '%base64_decode%' OR option_value LIKE '%<script%' OR option_value LIKE '%<iframe%'")
+            cursor.execute(f"SELECT option_name, option_value FROM {prefix}options WHERE option_value LIKE '%eval(%' OR option_value LIKE '%base64_decode%' OR option_value LIKE '%<script%' OR option_value LIKE '%<iframe%' OR option_value LIKE '%str_rot13(%' OR option_value LIKE '%gzinflate(%' OR option_value REGEXP '\\\\x[0-9a-fA-F]{2}'")
             for row in cursor.fetchall():
                 threats.append({
                     'table': f'{prefix}options',
@@ -252,7 +252,7 @@ class WPAdvancedScanner:
                 })
 
             # Scan wp_posts for injected scripts
-            cursor.execute(f"SELECT ID, post_title, post_content FROM {prefix}posts WHERE post_content LIKE '%<script%eval(%' OR post_content LIKE '%<iframe%display:none%' OR post_content LIKE '%base64_decode%' OR post_content LIKE '%document.write(unescape%' LIMIT 100")
+            cursor.execute(f"SELECT ID, post_title, post_content FROM {prefix}posts WHERE post_content LIKE '%<script%eval(%' OR post_content LIKE '%<iframe%display:none%' OR post_content LIKE '%base64_decode%' OR post_content LIKE '%document.write(unescape%' OR post_content LIKE '%str_rot13(%' OR post_content LIKE '%gzinflate(%' LIMIT 100")
             for row in cursor.fetchall():
                 threats.append({
                     'table': f'{prefix}posts',
@@ -260,6 +260,17 @@ class WPAdvancedScanner:
                     'key': f'Post #{row[0]}: {row[1][:50]}',
                     'snippet': row[2][:200],
                     'type': 'injected_script'
+                })
+
+            # Scan wp_comments for malicious links
+            cursor.execute(f"SELECT comment_ID, comment_author, comment_content FROM {prefix}comments WHERE comment_content LIKE '%<script%' OR comment_content LIKE '%base64_decode%' OR (comment_content LIKE '%http%' AND comment_content LIKE '%[url=%') LIMIT 100")
+            for row in cursor.fetchall():
+                threats.append({
+                    'table': f'{prefix}comments',
+                    'field': 'comment_content',
+                    'key': f'Comment #{row[0]} by {row[1][:30]}',
+                    'snippet': row[2][:200],
+                    'type': 'malicious_comment'
                 })
 
             # Scan wp_usermeta for suspicious capabilities

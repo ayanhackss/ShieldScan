@@ -16,11 +16,13 @@ class MLClassifier:
         'ascii_ratio_threshold': 0.85,
         'features_weights': {
             'entropy': 0.30,
-            'chi_square': 0.20,
-            'longest_line': 0.15,
-            'non_printable_ratio': 0.15,
+            'chi_square': 0.15,
+            'longest_line': 0.10,
+            'non_printable_ratio': 0.10,
             'compression_ratio': 0.10,
-            'keyword_density': 0.10
+            'keyword_density': 0.05,
+            'dynamic_calls': 0.10,
+            'chained_obfuscation': 0.10
         },
         'malicious_keywords': [
             'eval', 'base64_decode', 'gzinflate', 'gzuncompress', 'str_rot13',
@@ -104,6 +106,11 @@ class MLClassifier:
         avg_len = sum(line_lengths) / max(len(line_lengths), 1)
         variance = sum((l - avg_len) ** 2 for l in line_lengths) / max(len(line_lengths), 1)
 
+        # 9. Dynamic function calls (e.g. $var()) and Chained obfuscation
+        import re
+        dynamic_calls = len(re.findall(r'\$\w+\s*\(\s*(?:[\$\'"]|base64_decode)', text))
+        chained_obfuscation = len(re.findall(r'(?:eval|assert)\s*\(\s*(?:base64_decode|gzinflate|str_rot13)\s*\(', text))
+
         return {
             'entropy': round(entropy, 4),
             'chi_square': round(chi_square, 2),
@@ -113,6 +120,8 @@ class MLClassifier:
             'compression_ratio': round(compression_ratio, 6),
             'keyword_density': round(keyword_density, 4),
             'line_variance': round(variance, 2),
+            'dynamic_calls': dynamic_calls,
+            'chained_obfuscation': chained_obfuscation,
             'file_size': length
         }
 
@@ -173,6 +182,16 @@ class MLClassifier:
             reasons.append(f"high dangerous keyword density ({features['keyword_density']})")
         elif features['keyword_density'] > 1:
             score += weights['keyword_density'] * 0.5
+
+        # Dynamic Function Calls
+        if features.get('dynamic_calls', 0) > 0:
+            score += weights.get('dynamic_calls', 0.10) * 1.0
+            reasons.append(f"dynamic function calls ({features['dynamic_calls']})")
+
+        # Chained Obfuscation
+        if features.get('chained_obfuscation', 0) > 0:
+            score += weights.get('chained_obfuscation', 0.10) * 1.5  # Critical
+            reasons.append(f"chained obfuscation ({features['chained_obfuscation']})")
 
         # Determine label
         if score >= 0.7:

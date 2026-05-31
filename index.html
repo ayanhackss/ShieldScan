@@ -1,4 +1,8 @@
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+.bt-form { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.bt-w-con { animation: fadeIn 0.3s ease-out; }
 .mw-header{padding:0 0 14px;margin-bottom:16px;border-bottom:1px solid #f0f0f0;}
 .mw-header h2{margin:0;font-size:17px;font-weight:600;color:#111;letter-spacing:-0.4px;}
 .mw-header p{margin:4px 0 0;color:#888;font-size:12px;}
@@ -12,22 +16,22 @@
 .mw-btn{padding:6px 13px;border-radius:6px;border:1px solid #e0e0e0;cursor:pointer;font-size:11px;font-weight:500;background:#fff;color:#333;transition:all 0.15s;}
 .mw-btn:hover{border-color:#999;background:#f8f8f8;transform:translateY(-1px);}
 .mw-btn:active{transform:translateY(0);}
-.mw-btn-primary{background:#111;color:#fff;border-color:#111;}.mw-btn-primary:hover{background:#333;border-color:#333;}
-.mw-btn-danger{color:#dc2626;border-color:#fca5a5;}.mw-btn-danger:hover{background:#fef2f2;border-color:#dc2626;}
+.mw-btn-primary{background:#1a1b1e;color:#fff;border-color:#1a1b1e;}.mw-btn-primary:hover{background:#2c2e33;border-color:#2c2e33;}
+.mw-btn-danger{color:#dc2626;border-color:#e5e7eb;}.mw-btn-danger:hover{background:#fef2f2;border-color:#dc2626;}
 .mw-btn-sm{padding:4px 9px;font-size:10px;border-radius:4px;}
 .mw-input{padding:7px 11px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;transition:border-color 0.15s,box-shadow 0.15s;}
 .mw-input:focus{border-color:#111;outline:none;box-shadow:0 0 0 3px rgba(0,0,0,0.05);}
 .mw-select{padding:7px 11px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;background:#fff;}
-.mw-sev{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;}
-.mw-sev-critical{background:#fef2f2;color:#dc2626;}.mw-sev-high{background:#fff7ed;color:#ea580c;}.mw-sev-medium{background:#fefce8;color:#ca8a04;}.mw-sev-low{background:#f0fdf4;color:#16a34a;}
-.mw-cat{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;background:#f4f4f5;color:#52525b;font-family:monospace;}
+.mw-sev{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;border:1px solid transparent;}
+.mw-sev-critical{color:#dc2626;border-color:#fca5a5;}.mw-sev-high{color:#ea580c;border-color:#fdba74;}.mw-sev-medium{color:#ca8a04;border-color:#fde047;}.mw-sev-low{color:#16a34a;border-color:#86efac;}
+.mw-cat{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;background:#f4f4f5;color:#52525b;font-family:monospace;}
 .mw-stats{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .mw-stat{flex:1;min-width:85px;border:1px solid #f0f0f0;border-radius:8px;padding:12px 8px;text-align:center;background:#fafafa;transition:background 0.15s;}
 .mw-stat:hover{background:#f4f4f5;}
 .mw-stat .num{font-size:20px;font-weight:700;color:#111;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;}
 .mw-stat .lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;}
 .mw-progress{height:4px;background:#f0f0f0;border-radius:4px;overflow:hidden;margin:10px 0;}
-.mw-progress-bar{height:100%;background:linear-gradient(90deg,#111,#444);transition:width 0.4s ease;border-radius:4px;}
+.mw-progress-bar{height:100%;background:#1a1b1e;transition:width 0.4s ease;border-radius:4px;}
 .mw-site-row{padding:9px 0;border-bottom:1px solid #f4f4f5;display:flex;align-items:center;justify-content:space-between;font-size:12px;transition:background 0.1s;}
 .mw-site-row:hover{background:#fafafa;margin:0 -8px;padding:9px 8px;border-radius:4px;}
 .mw-site-row:last-child{border-bottom:none;}
@@ -35,6 +39,29 @@
 .mw-empty{color:#999;font-size:12px;padding:20px 0;text-align:center;}
 .mw-diff-add{background:#f0fdf4;}.mw-diff-del{background:#fef2f2;}.mw-diff-mod{background:#fffbeb;}
 </style>
+<style id="mw-dark-mode">
+[data-theme="dark"] .bt-form, [data-theme="dark"] .bt-w-main { background: #1a1b1e; color: #e5e7eb; }
+[data-theme="dark"] .mw-card { background: #25262b; border-color: #373a40; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+[data-theme="dark"] .mw-header h2 { color: #f8f9fa; }
+[data-theme="dark"] .mw-header { border-bottom-color: #373a40; }
+[data-theme="dark"] .mw-stat { background: #2c2e33; border-color: #373a40; }
+[data-theme="dark"] .mw-stat:hover { background: #373a40; }
+[data-theme="dark"] .mw-stat .num { color: #f8f9fa; }
+[data-theme="dark"] .mw-table th { color: #a6a7ab; border-bottom-color: #373a40; }
+[data-theme="dark"] .mw-table td { color: #c1c2c5; border-bottom-color: #2c2e33; }
+[data-theme="dark"] .mw-table tr:hover td { background: #2c2e33; }
+[data-theme="dark"] .mw-input, [data-theme="dark"] .mw-select { background: #25262b; color: #c1c2c5; border-color: #373a40; }
+[data-theme="dark"] .mw-input:focus { border-color: #5c5f66; }
+[data-theme="dark"] .mw-btn { background: #25262b; color: #c1c2c5; border-color: #373a40; }
+[data-theme="dark"] .mw-btn:hover { background: #373a40; }
+[data-theme="dark"] .mw-btn-primary { background: #3c3f44; color: #fff; border-color: #3c3f44; }
+[data-theme="dark"] .bt-w-menu { border-right: 1px solid #373a40; background: #1a1b1e; }
+[data-theme="dark"] .bt-w-menu p { color: #a6a7ab; border-bottom: 1px solid #25262b; }
+[data-theme="dark"] .bt-w-menu p.bgw { background: #25262b; color: #fff; border-right: 3px solid #6c7075; }
+[data-theme="dark"] .mw-site-row:hover { background: #2c2e33; }
+[data-theme="dark"] .mw-empty { color: #6c7075; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="bt-form">
   <div class="bt-w-main">
@@ -49,6 +76,7 @@
       <p onclick="mw.wordpress()">WordPress</p>
       <p onclick="mw.realtime()">Realtime</p>
       <p onclick="mw.mlscan()">ML Scan</p>
+      <p onclick="mw.toggleDark()" style="margin-top:20px; font-weight:bold;">🌓 Dark Mode</p>
     </div>
     <div class="bt-w-con" style="padding:14px;">
       <div id="mw_con"></div>
@@ -63,6 +91,19 @@ var mw = {
   _cat: function(c){ return '<span class="mw-cat">' + c + '</span>'; },
   _pollTimer: null,
   _currentScan: null,
+  
+  toggleDark: function() {
+    var isDark = $('body').attr('data-theme') === 'dark';
+    $('body').attr('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('mw_theme', isDark ? 'light' : 'dark');
+    if(mw.chartInstance) mw.chartInstance.update();
+  },
+  
+  initTheme: function() {
+    if(localStorage.getItem('mw_theme') === 'dark') {
+      $('body').attr('data-theme', 'dark');
+    }
+  },
 
 
   // === DASHBOARD ===
@@ -94,7 +135,54 @@ var mw = {
         'Reverse shells &bull; LFI/RFI &bull; Privilege escalation &bull; ' +
         'Shannon entropy analysis &bull; YARA rules &bull; File hash matching &bull; ' +
         'Integrity monitoring</p></div>';
+      html += '<div class="mw-card"><h4>Recent Scans Overview</h4><canvas id="mwChart" height="80"></canvas></div>';
       $('#mw_dash').html(html);
+      mw._renderChart();
+    });
+  },
+
+  _renderChart: function() {
+    $.post('/plugin?action=a&name=malwarescan&s=list_reports', {}, function(res) {
+      if(!res.reports || !res.reports.length) return;
+      var labels = [];
+      var dataFiles = [];
+      var dataThreats = [];
+      var reps = res.reports.slice(0, 10).reverse();
+      for(var i=0; i<reps.length; i++) {
+        var d = new Date(reps[i].date * 1000);
+        labels.push(d.getMonth()+1 + '/' + d.getDate() + ' ' + d.getHours() + ':' + (d.getMinutes()<10?'0':'')+d.getMinutes());
+        dataFiles.push(reps[i].total_files);
+        dataThreats.push(reps[i].threats);
+      }
+      var ctx = document.getElementById('mwChart').getContext('2d');
+      var isDark = $('body').attr('data-theme') === 'dark';
+      var gridColor = isDark ? '#373a40' : '#f0f0f0';
+      var textColor = isDark ? '#a6a7ab' : '#666';
+      
+      var gradient = ctx.createLinearGradient(0, 0, 0, 80);
+      gradient.addColorStop(0, isDark ? 'rgba(220,38,38,0.2)' : 'rgba(220,38,38,0.1)');
+      gradient.addColorStop(1, 'rgba(220,38,38,0)');
+
+      if(mw.chartInstance) mw.chartInstance.destroy();
+      mw.chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Scanned Files', data: dataFiles, backgroundColor: isDark ? '#3c3f44' : '#1a1b1e', borderRadius: 4, order: 2 },
+            { label: 'Threats', data: dataThreats, backgroundColor: gradient, fill: true, type: 'line', borderColor: '#dc2626', borderWidth: 2, tension: 0.4, pointRadius: 0, pointHitRadius: 10, order: 1 }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            y: { grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor } },
+            x: { grid: { display: false, drawBorder: false }, ticks: { color: textColor } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
     });
   },
 
@@ -172,6 +260,7 @@ var mw = {
           '<td>' + t.line + '</td><td>' + mw._sev(t.severity) + '</td><td>' + mw._cat(t.category) + '</td>' +
           '<td style="max-width:250px;"><span style="font-size:10px;">' + t.description + '</span><span class="mw-snippet">' + (t.snippet||'').replace(/</g,'&lt;').substring(0,100) + '</span></td>' +
           '<td style="white-space:nowrap;"><button class="mw-btn mw-btn-danger mw-btn-sm" onclick="mw._quarantine(\'' + t.file.replace(/'/g,"\\'") + '\')">Q</button> ' +
+          '<button class="mw-btn mw-btn-sm" style="color:#16a34a;border-color:#16a34a;" onclick="mw._clean(\'' + t.file.replace(/'/g,"\\'") + '\')">Clean</button> ' +
           '<button class="mw-btn mw-btn-sm" onclick="mw._wl(\'' + t.file.replace(/'/g,"\\'") + '\')">WL</button></td></tr>';
       }
       html += '</tbody></table></div>';
@@ -183,6 +272,16 @@ var mw = {
     layer.confirm('Quarantine ' + fp.split('/').pop() + '?', function(idx) {
       layer.close(idx);
       $.post('/plugin?action=a&name=malwarescan&s=quarantine_file', {filepath: fp}, function(res) { layer.msg(res.msg); });
+    });
+  },
+  _clean: function(fp) {
+    layer.confirm('Attempt smart cleaning on ' + fp.split('/').pop() + '?<br><br><span style="font-size:11px;color:#888;">This will try to safely extract and remove the malicious code. A backup will be saved.</span>', function(idx) {
+      layer.close(idx);
+      var l = layer.load();
+      $.post('/plugin?action=a&name=malwarescan&s=clean_file', {filepath: fp}, function(res) { 
+        layer.close(l);
+        if(res.status) { layer.msg(res.msg, {icon:1}); } else { layer.msg(res.msg, {icon:2, time: 3000}); }
+      });
     });
   },
   _wl: function(fp) {
@@ -707,5 +806,6 @@ var mw = {
     });
   }
 };
+mw.initTheme();
 mw.dashboard();
 </script>
